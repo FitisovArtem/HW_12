@@ -1,9 +1,10 @@
 from collections import UserDict
 from datetime import datetime
 import json
-import re
+import os
 
-FILENAME = "AddressBook.txt"
+FILENAME = "AddressBook.json"
+
 
 class Field:
     def __init__(self, value):
@@ -27,7 +28,7 @@ class Phone(Field):
 
     @value.setter
     def value(self, phone):
-        if self.is_validate_phone(phone) == False:
+        if not self.is_validate_phone(phone):
             raise AttributeError("Number is not Valid!")
 
     def is_validate_phone(self, phone_for_validation):
@@ -80,11 +81,10 @@ class Record:
 
     def days_to_birthday(self):
         print(self, self.birthday)
-        if self.birthday == None:
+        if self.birthday is None:
             return "Дата рождения не задана"
 
         b_now = datetime.now()
-        a = self.birthday.birthday
 
         print(self.birthday)
         b_d = datetime(b_now.year, self.birthday.birthday.month, self.birthday.birthday.day + 1)
@@ -102,33 +102,38 @@ class AddressBook(UserDict):
     def add_record(self, record: Record):
         self.data[record.name.value] = record
 
-        with open(FILENAME, "r", encoding="utf-8") as fh:
-            ad_book_list = json.load(fh)
-        for el in ad_book_list:
-            if el.get('name') == record.name.value:
-                ad_book_list.remove(el)
-                break
-        contact = {"name": record.name.value, "phone": record.phones[0].value, "birthday": record.birthday.birthday}
+        if os.path.exists(FILENAME):
+            with open(FILENAME, "r", encoding="utf-8") as fh:
+                ad_book_list = json.load(fh)
+            for el in ad_book_list:
+                if el.get('name') == record.name.value:
+                    ad_book_list.remove(el)
+                    break
+        else:
+            ad_book_list = []
+
+        contact = {"name": record.name.value, "phones": [ph.value for ph in record.phones],
+                   "birthday": record.birthday.birthday}
         ad_book_list.append(contact)
         with open(FILENAME, "w", encoding="utf-8") as file:
-            json.dump(ad_book_list, file)
+            json.dump(ad_book_list, file, indent=4, ensure_ascii=False)
 
     def find_record(self, value):
         with open(FILENAME, "r", encoding="utf-8") as fh:
             book_list = json.load(fh)
         result = []
         for el in book_list:
-            for n,v in el.items():
+            for n, v in el.items():
                 if value in str(v):
                     result.append(el)
         if len(result) > 0:
             return result
         else:
-            return (f"По данным: {value} не найдено совпадений в книге контактов")
+            return f"По данным: {value} не найдено совпадений в книге контактов"
 
-    def iterator(self, count_data):
-        my_IterAddressBook_list = IterAddressBook(count_data)
-        for ran in my_IterAddressBook_list:
+    def iterator(self, count_data) -> None:
+        myIterAddressBookList = IterAddressBook(count_data)
+        for ran in myIterAddressBookList:
             print(ran, end=' ')
 
 
@@ -162,22 +167,14 @@ if __name__ == "__main__":
     rec2 = Record(name2, phone2, bd2)
     ab.add_record(rec2)
 
-    # a = list(ab.data.keys())
-    # print(Name(ab[a[0]].name), type(a))
-    # print(ab.find_record("Bill").birthday.birthday)
+    assert isinstance(ab['Bill'], Record)
+    assert isinstance(ab['Bill'].name, Name)
+    assert isinstance(ab['Bill'].birthday, Birthday)
+    assert isinstance(ab['Bill'].phones, list)
+    assert isinstance(ab['Bill'].phones[0], Phone)
+    assert ab['Bill'].phones[0].value == '1234567890'
 
-    # assert isinstance(ab['Bill'], Record)
-    # assert isinstance(ab['Bill'].name, Name)
-    # assert isinstance(ab['Bill'].birthday, Birthday)
-    # # print(rec.days_to_birthday())
-    # assert isinstance(ab['Bill'].phones, list)
-    # assert isinstance(ab['Bill'].phones[0], Phone)
-    # assert ab['Bill'].phones[0].value == '1234567890'
-    # print(ab.data)
-    # print(ab.iterator(1))
-    # print(ab.iterator(2))
-
-    a = ab.find_record("454")
-    print(a)
+    test_find = ab.find_record("789")
+    print(test_find)
 
     print('All Ok)')
