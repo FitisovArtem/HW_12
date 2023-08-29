@@ -174,7 +174,6 @@ if __name__ == "__main__":
     assert isinstance(ab['Bill'].phones[0], Phone)
     assert ab['Bill'].phones[0].value == '1234567890'
 
-    test_find = ab.find_record("789")
-    print(test_find)
+    print(ab.find_record("789"))
 
     print('All Ok)')
